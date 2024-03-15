@@ -9,8 +9,13 @@ import {
 } from 'react-bootstrap';
 
 import Auth from '../utils/auth';
-import { saveBook, searchGoogleBooks } from '../utils/API';
+import { searchGoogleBooks } from '../utils/API';
 import { saveBookIds, getSavedBookIds } from '../utils/localStorage';
+
+import { useMutation } from "@apollo/client";
+import { SAVE_BOOK } from "../utils/mutations";
+
+import { GET_ME } from "../utils/queries";
 
 const SearchBooks = () => {
   // create state for holding returned google api data
@@ -21,12 +26,36 @@ const SearchBooks = () => {
   const [savedBookIds, setSavedBookIds] = useState(getSavedBookIds());
   // set up useEffect hook to save `savedBookIds` list to localStorage on component unmount
   // learn more here: https://reactjs.org/docs/hooks-effect.html#effects-with-cleanup
+ 
+ const [saveBook] = useMutation(SAVE_BOOK, {
+    // The below block ensures that as soon as the user saves a book, it appears right away in the saved books page
+    update(cache, { data: { saveBook } }) {
+      try {
+        const { me } = cache.readQuery({
+          query: GET_ME,
+        });
+
+        cache.writeQuery({
+          query: GET_ME,
+          data: {
+            me: {
+              ...me,
+              savedBooks: [
+                ...me.savedBooks,
+                saveBook.savedBooks[saveBook.savedBooks.length - 1],
+              ],
+            },
+          },
+        });
+      // eslint-disable-next-line no-empty
+      } catch (e) {}
+    },
+  });
+ 
   useEffect(() => {
     return () => saveBookIds(savedBookIds);
   });
 
-  // use the SAVE_BOOK mutation
-  const [saveBook] = useMutation(SAVE_BOOK);
 
   // create method to search for books and set state on form submit
   const handleFormSubmit = async (event) => {
@@ -37,9 +66,7 @@ const SearchBooks = () => {
     }
 
     try {
-      const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${searchInput}`
-      );
+      const response = await searchGoogleBooks(searchInput);
 
       if (!response.ok) {
         throw new Error("something went wrong!");
@@ -87,6 +114,7 @@ const SearchBooks = () => {
 
       // if book successfully saves to user's account, save book id to state
       setSavedBookIds([...savedBookIds, bookToSave.bookId]);
+      saveBookIds(savedBookIds);
     } catch (err) {
       console.error(err);
     }
