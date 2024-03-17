@@ -1,19 +1,21 @@
 /* eslint-disable react/jsx-key */
 import { Container, Card, Button, Row, Col } from "react-bootstrap";
 
-import { getMe } from "../utils/API";
-import { useQuery } from "@apollo/client";
-import { useMutation } from "@apollo/client";
-import { REMOVE_BOOK } from "../utils/mutations";
 import Auth from "../utils/auth";
 import { removeBookId } from "../utils/localStorage";
 
+import { useMutation, useQuery } from "@apollo/client";
+import { REMOVE_BOOK } from "../utils/mutations";
+import { GET_ME } from "../utils/queries";
+
 const SavedBooks = () => {
-  const {  data } = useQuery(getMe);
-  const userDataLength = Object.keys(userData).length;
-  const [deleteBook] = useMutation(REMOVE_BOOK);
+  const { data } = useQuery(GET_ME);
+  const [removeBook] = useMutation(REMOVE_BOOK);
 
   const userData = data?.me || {};
+
+  // use this to determine if `useEffect()` hook needs to run again
+  const userDataLength = Object.keys(userData).length;
 
   // create function that accepts the book's mongo _id value as param and deletes the book from the database
   const handleDeleteBook = async (bookId) => {
@@ -24,22 +26,12 @@ const SavedBooks = () => {
     }
 
     try {
-      await deleteBook({
+      const { data } = await removeBook({
         variables: { bookId },
       });
 
       // upon success, remove book's id from localStorage
       removeBookId(bookId);
-      document.getElementById(bookId).remove();
-      let counterEl = document.getElementById("counter");
-      let currentNum = parseInt(counterEl.innerText.split(" ")[1]);
-      if (currentNum === 1) {
-        return (counterEl.innerText = "You have no saved books!");
-      } else {
-        counterEl.innerText = `Viewing ${currentNum - 1} saved ${
-          currentNum === 1 ? "book" : "books"
-        }`;
-      }
     } catch (err) {
       console.error(err);
     }
