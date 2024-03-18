@@ -65,7 +65,7 @@ const resolvers = {
         return updatedBooks;
       }
 
-      throw new AuthenticationError('You need to be logged in!');
+      throw AuthenticationError;
     },
   },
 };
