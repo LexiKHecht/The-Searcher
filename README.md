@@ -44,10 +44,6 @@ To install required dependencies and initiate the app, run the following command
 - Save book feature 
 
 
-
-![BETE](https://github.com/LexiKHecht/BETE/assets/145725343/c43974ec-a6a5-4238-a311-51d1d95898a4)
-
-
 ## Technology Used
 - [Express](https://expressjs.com/)
 - [Apollo GrapgQL](https://www.apollographql.com/)
